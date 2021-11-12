@@ -46,7 +46,7 @@ search_anime () {
 	search=$(printf '%s' "$1" | tr ' ' '-' )
 	titlepattern='<a href="/category/'
 
-	curl -s "$base_url//search.html" \
+	curl --doh-url https://cloudflare-dns.com/dns-query -s "$base_url//search.html" \
 		-G \
 		-d "keyword=$search" |
 	sed -n -E '
@@ -58,7 +58,7 @@ search_eps () {
 	# get available episodes for anime_id
 	anime_id=$1
 
-	curl -s "$base_url/category/$anime_id" |
+	curl --doh-url https://cloudflare-dns.com/dns-query -s "$base_url/category/$anime_id" |
 	sed -n -E '
 		/^[[:space:]]*<a href="#" class="active" ep_start/{
 		s/.* '\''([0-9]*)'\'' ep_end = '\''([0-9]*)'\''.*/\2/p
@@ -74,7 +74,7 @@ get_embedded_video_link() {
 
 	# credits to fork: https://github.com/Dink4n/ani-cli for the fix
 	# dub prefix takes the value "-dub" when dub is needed else is empty
-	curl -s "$base_url/$anime_id${dub_prefix}-episode-$ep_no" |
+	curl --doh-url https://cloudflare-dns.com/dns-query -s "$base_url/$anime_id${dub_prefix}-episode-$ep_no" |
 	sed -n -E '
 		/^[[:space:]]*<a href="#" rel="100"/{
 		s/.*data-video="([^"]*)".*/https:\1/p
@@ -86,7 +86,7 @@ get_video_quality() {
 	embedded_video_url=$1
 	video_url=$2
 
-	video_file=$(curl -s --referer "$embedded_video_url" "$video_url")
+	video_file=$(curl --doh-url https://cloudflare-dns.com/dns-query -s --referer "$embedded_video_url" "$video_url")
 	available_qualities=$(printf '%s' "$video_file" | sed -n -E 's/.*NAME="([^p]*)p"/\1/p')
 	case $quality in
 		best)
@@ -113,7 +113,7 @@ get_video_quality() {
 
 get_links () {
 	embedded_video_url="$1"
-	video_url=$(curl -s "$embedded_video_url" |
+	video_url=$(curl --doh-url https://cloudflare-dns.com/dns-query -s "$embedded_video_url" |
 	sed -n -E '
 		/^[[:space:]]*sources:/{
 		s/.*(https[^'\'']*).*/\1/p
@@ -262,7 +262,7 @@ open_episode () {
 			# If direct download not available then scrape streamtape.com
 			BROWSER=${BROWSER:-firefox}
 			printf "scraping streamtape.com\n"
-			video_url=$(curl -s "$video_url" | sed -n -E '
+			video_url=$(curl --doh-url https://cloudflare-dns.com/dns-query -s "$video_url" | sed -n -E '
 				/^<script>document/{
 				s/^[^"]*"([^"]*)" \+ '\''([^'\'']*).*/https:\1\2\&dl=1/p
 				q
